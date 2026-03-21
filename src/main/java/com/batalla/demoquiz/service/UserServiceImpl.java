@@ -20,7 +20,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User register(String username, String email, String password) {
+    public User register(String username, String email, String password, String role) {
 
         // Evitar duplicados
         userRepository.findByEmail(email).ifPresent(u -> {
@@ -35,16 +35,16 @@ public class UserServiceImpl implements UserService {
         u.setUsername(username);
         u.setEmail(email);
         u.setPasswordHash(encoder.encode(password));
-        u.setRole("USER");
+        u.setRole(role); // USER o CREATOR
         u.setTotalScore(0);
 
         return userRepository.save(u);
     }
 
     @Override
-    public User login(String email, String password) {
-        User u = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Email not found"));
+    public User login(String username, String password) {
+        User u = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Username not found"));
 
         if (!encoder.matches(password, u.getPasswordHash())) {
             throw new RuntimeException("Invalid password");

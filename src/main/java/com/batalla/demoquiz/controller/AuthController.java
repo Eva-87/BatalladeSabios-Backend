@@ -3,7 +3,6 @@ package com.batalla.demoquiz.controller;
 import com.batalla.demoquiz.dto.LoginRequest;
 import com.batalla.demoquiz.dto.RegisterRequest;
 import com.batalla.demoquiz.entity.User;
-import com.batalla.demoquiz.security.JwtUtil;
 import com.batalla.demoquiz.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,40 +14,37 @@ import java.util.Map;
 public class AuthController {
 
     private final UserService userService;
-    private final JwtUtil jwtUtil;
 
-    public AuthController(UserService userService, JwtUtil jwtUtil) {
+    public AuthController(UserService userService) {
         this.userService = userService;
-        this.jwtUtil = jwtUtil;
     }
 
     // -----------------------------
-    // REGISTRO (CON EMAIL)
+    // REGISTRO
     // -----------------------------
     @PostMapping("/register")
     public User register(@RequestBody RegisterRequest request) {
         return userService.register(
                 request.getUsername(),
                 request.getEmail(),
-                request.getPassword()
+                request.getPassword(),
+                request.getRole() // USER o CREATOR
         );
     }
 
     // -----------------------------
-    // LOGIN (CON USERNAME)
+    // LOGIN
     // -----------------------------
     @PostMapping("/login")
     public Map<String, Object> login(@RequestBody LoginRequest request) {
 
         User user = userService.login(
-                request.getUsername(),   // ← CAMBIADO
+                request.getUsername(),
                 request.getPassword()
         );
 
-        String token = jwtUtil.generateToken(user.getUsername()); // ← CAMBIADO
-
         return Map.of(
-                "token", token,
+                "message", "Login correcto",
                 "user", user
         );
     }

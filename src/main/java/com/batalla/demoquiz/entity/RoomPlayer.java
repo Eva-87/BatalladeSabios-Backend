@@ -11,7 +11,7 @@ public class RoomPlayer {
     private Long id;
 
     @ManyToOne
-    @JsonBackReference // ⭐ evita ciclo con GameRoom
+    @JsonBackReference
     private GameRoom room;
 
     @ManyToOne
@@ -20,8 +20,6 @@ public class RoomPlayer {
     private int score;
 
     private boolean connected;
-
-    // getters y setters...
 
     public RoomPlayer() {}
 

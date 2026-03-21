@@ -23,14 +23,14 @@ public class GameRoom {
     private Quiz quiz;
 
     @OneToMany(mappedBy = "room")
-    @JsonManagedReference // ⭐ evita ciclos
+    @JsonManagedReference
     private List<RoomPlayer> players;
 
     @Enumerated(EnumType.STRING)
     private GameStatus status = GameStatus.LOBBY;
 
-    // getters y setters...
-
+    private int currentQuestionIndex = 0;
+    private boolean gameFinished = false;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -52,4 +52,10 @@ public class GameRoom {
 
     public GameStatus getStatus() { return status; }
     public void setStatus(GameStatus status) { this.status = status; }
+
+    public int getCurrentQuestionIndex() { return currentQuestionIndex; }
+    public void setCurrentQuestionIndex(int currentQuestionIndex) { this.currentQuestionIndex = currentQuestionIndex; }
+
+    public boolean isGameFinished() { return gameFinished; }
+    public void setGameFinished(boolean gameFinished) { this.gameFinished = gameFinished; }
 }

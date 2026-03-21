@@ -21,10 +21,6 @@ public class Quiz {
 
     private String imageUrl;
 
-    // ❌ ELIMINADO: causaba recursión infinita
-    // @ElementCollection
-    // private List<Long> questionIds;
-
     @ManyToOne
     @JoinColumn(name = "creator_id")
     private User creator;

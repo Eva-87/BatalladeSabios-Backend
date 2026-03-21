@@ -19,7 +19,12 @@ public class UserController {
 
     @PostMapping("/register")
     public User register(@RequestBody RegisterRequest request) {
-        return userService.register(request.getUsername(), request.getEmail(), request.getPassword());
+        return userService.register(
+                request.getUsername(),
+                request.getEmail(),
+                request.getPassword(),
+                request.getRole()   
+        );
     }
 
     @GetMapping("/ranking")
@@ -32,5 +37,3 @@ public class UserController {
         return userService.createUser(user);
     }
 }
-
-
