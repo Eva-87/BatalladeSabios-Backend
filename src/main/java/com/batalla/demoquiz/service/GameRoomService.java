@@ -15,3 +15,5 @@ public interface GameRoomService {
 
     GameRoom getRoom(String code);
 }
+
+

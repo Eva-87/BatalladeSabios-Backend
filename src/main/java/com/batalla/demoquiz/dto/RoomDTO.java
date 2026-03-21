@@ -1,4 +1,3 @@
-// src/main/java/com/batalla/demoquiz/dto/RoomDTO.java
 package com.batalla.demoquiz.dto;
 
 public record RoomDTO(

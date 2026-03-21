@@ -3,7 +3,10 @@ package com.batalla.demoquiz.entity;
 import com.batalla.demoquiz.enums.GameStatus;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 public class GameRoom {
@@ -15,6 +18,12 @@ public class GameRoom {
     private String code;
 
     private int maxPlayers;
+
+    @Transient
+    private Map<Long, Integer> correctAnswers = new HashMap<>();
+
+    @Transient
+    private Map<Long, Integer> wrongAnswers = new HashMap<>();
 
     @ManyToOne
     private User creator;
@@ -31,6 +40,14 @@ public class GameRoom {
 
     private int currentQuestionIndex = 0;
     private boolean gameFinished = false;
+
+    public void addCorrect(Long userId) {
+        correctAnswers.put(userId, correctAnswers.getOrDefault(userId, 0) + 1);
+    }
+
+    public void addWrong(Long userId) {
+        wrongAnswers.put(userId, wrongAnswers.getOrDefault(userId, 0) + 1);
+    }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -58,4 +75,12 @@ public class GameRoom {
 
     public boolean isGameFinished() { return gameFinished; }
     public void setGameFinished(boolean gameFinished) { this.gameFinished = gameFinished; }
+
+    public Map<Long, Integer> getCorrectAnswers() {
+        return correctAnswers;
+    }
+
+    public Map<Long, Integer> getWrongAnswers() {
+        return wrongAnswers;
+    }
 }

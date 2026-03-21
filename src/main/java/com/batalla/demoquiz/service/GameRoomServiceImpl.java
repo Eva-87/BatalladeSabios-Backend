@@ -47,7 +47,7 @@ public class GameRoomServiceImpl implements GameRoomService {
         room.setQuiz(quiz);
         room.setCreator(creator);
         room.setMaxPlayers(maxPlayers);
-        room.setStatus(GameStatus.LOBBY); // ✔ IMPORTANTE
+        room.setStatus(GameStatus.LOBBY);
 
         GameRoom saved = gameRoomRepository.save(room);
 

@@ -36,6 +36,9 @@ public class Question {
     @JoinColumn(name = "creator_id")
     private User creator;
 
+    @Column(columnDefinition = "TEXT")
+    private String explanation;   // ⭐ NUEVO CAMPO
+
     private boolean approved = true;
 
     public Question() {}
@@ -75,4 +78,8 @@ public class Question {
 
     public boolean isApproved() { return approved; }
     public void setApproved(boolean approved) { this.approved = approved; }
+
+    // ⭐ GETTER Y SETTER DE EXPLANATION
+    public String getExplanation() { return explanation; }
+    public void setExplanation(String explanation) { this.explanation = explanation; }
 }

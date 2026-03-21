@@ -14,5 +14,3 @@ public class CreateRoomRequest {
     public int getMaxPlayers() { return maxPlayers; }
     public void setMaxPlayers(int maxPlayers) { this.maxPlayers = maxPlayers; }
 }
-
-

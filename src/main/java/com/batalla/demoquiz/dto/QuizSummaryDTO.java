@@ -6,5 +6,3 @@ public record QuizSummaryDTO(
     String topic,
     String imageUrl
 ) {}
-
-

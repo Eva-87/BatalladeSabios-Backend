@@ -21,4 +21,3 @@ public class QuizUpdateRequest {
     public List<Long> getQuestionIds() { return questionIds; }
     public void setQuestionIds(List<Long> questionIds) { this.questionIds = questionIds; }
 }
-

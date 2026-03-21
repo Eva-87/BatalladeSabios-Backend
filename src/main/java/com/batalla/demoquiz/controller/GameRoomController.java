@@ -55,6 +55,22 @@ public class GameRoomController {
         return gameEngineService.startGame(code);
     }
 
+    @PostMapping("/{code}/answer")
+    public RoundResultMessage submitAnswer(@PathVariable String code,
+                                           @RequestBody AnswerMessage answer) {
+        return gameEngineService.submitAnswer(code, answer);
+    }
+
+    @PostMapping("/{code}/next")
+    public QuestionMessage nextQuestion(@PathVariable String code) {
+        return gameEngineService.nextQuestion(code);
+    }
+
+    @PostMapping("/{code}/finish")
+    public GameOverMessage finishGame(@PathVariable String code) {
+        return gameEngineService.finishGame(code);
+    }
+
     @GetMapping("/{code}/status")
     public GameStatus getStatus(@PathVariable String code) {
         return roomService.getStatus(code);
@@ -71,21 +87,5 @@ public class GameRoomController {
                 room.getMaxPlayers(),
                 room.getStatus().name()
         );
-    }
-
-    @PostMapping("/{code}/answer")
-    public RoundResultMessage submitAnswer(@PathVariable String code,
-                                           @RequestBody AnswerMessage answer) {
-        return gameEngineService.submitAnswer(code, answer);
-    }
-
-    @PostMapping("/{code}/next")
-    public QuestionMessage nextQuestion(@PathVariable String code) {
-        return gameEngineService.nextQuestion(code);
-    }
-
-    @PostMapping("/{code}/finish")
-    public GameOverMessage finishGame(@PathVariable String code) {
-        return gameEngineService.finishGame(code);
     }
 }
