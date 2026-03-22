@@ -26,6 +26,9 @@ public class GameEngineServiceImpl implements GameEngineService {
     private final Map<String, Map<Long, Integer>> roomAnswers = new HashMap<>();
     private final Map<String, Long> questionStartTime = new HashMap<>();
 
+    // ⭐ Pregunta actual accesible para TODOS los jugadores
+    private final Map<String, QuestionMessage> currentQuestion = new HashMap<>();
+
     public GameEngineServiceImpl(GameRoomRepository gameRoomRepository,
                                  RoomPlayerRepository roomPlayerRepository) {
         this.gameRoomRepository = gameRoomRepository;
@@ -37,6 +40,7 @@ public class GameEngineServiceImpl implements GameEngineService {
     // ---------------------------------------------------------
     @Override
     public QuestionMessage startGame(String roomCode) {
+
         GameRoom room = gameRoomRepository.findByCode(roomCode)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
@@ -50,18 +54,18 @@ public class GameEngineServiceImpl implements GameEngineService {
         Collections.shuffle(shuffled);
 
         roomQuestions.put(roomCode, shuffled);
-        roomRound.put(roomCode, 1); // ⭐ Empezamos en ronda 1
+        roomRound.put(roomCode, 1);
         roomAnswers.put(roomCode, new HashMap<>());
 
         room.setStatus(GameStatus.PLAYING);
         gameRoomRepository.save(room);
 
-        // ⭐ Devolver la PRIMERA pregunta directamente
+        // Primera pregunta
         Question q = shuffled.get(0);
 
         questionStartTime.put(roomCode, System.currentTimeMillis());
 
-        return new QuestionMessage(
+        QuestionMessage msg = new QuestionMessage(
                 q.getId(),
                 q.getText(),
                 List.of(q.getOptionA(), q.getOptionB(), q.getOptionC(), q.getOptionD()),
@@ -69,6 +73,11 @@ public class GameEngineServiceImpl implements GameEngineService {
                 q.getCorrectIndex(),
                 q.getExplanation()
         );
+
+        // ⭐ Guardar pregunta actual
+        currentQuestion.put(roomCode, msg);
+
+        return msg;
     }
 
     // ---------------------------------------------------------
@@ -154,7 +163,7 @@ public class GameEngineServiceImpl implements GameEngineService {
         room.setStatus(GameStatus.PLAYING);
         gameRoomRepository.save(room);
 
-        return new QuestionMessage(
+        QuestionMessage msg = new QuestionMessage(
                 q.getId(),
                 q.getText(),
                 List.of(q.getOptionA(), q.getOptionB(), q.getOptionC(), q.getOptionD()),
@@ -162,6 +171,11 @@ public class GameEngineServiceImpl implements GameEngineService {
                 q.getCorrectIndex(),
                 q.getExplanation()
         );
+
+        // ⭐ Guardar nueva pregunta actual
+        currentQuestion.put(roomCode, msg);
+
+        return msg;
     }
 
     // ---------------------------------------------------------
@@ -191,5 +205,13 @@ public class GameEngineServiceImpl implements GameEngineService {
                 .collect(Collectors.toList());
 
         return new GameOverMessage(ranking);
+    }
+
+    // ---------------------------------------------------------
+    // GET CURRENT QUESTION
+    // ---------------------------------------------------------
+    @Override
+    public QuestionMessage getCurrentQuestion(String roomCode) {
+        return currentQuestion.get(roomCode);
     }
 }

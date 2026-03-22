@@ -14,4 +14,6 @@ public interface GameEngineService {
     QuestionMessage nextQuestion(String roomCode);
 
     GameOverMessage finishGame(String roomCode);
+
+    QuestionMessage getCurrentQuestion(String roomCode);
 }

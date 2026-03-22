@@ -2,6 +2,8 @@ package com.batalla.demoquiz.entity;
 
 import com.batalla.demoquiz.enums.Topic;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.*;
 import java.util.List;
 
@@ -23,6 +25,7 @@ public class Quiz {
 
     @ManyToOne
     @JoinColumn(name = "creator_id")
+    @JsonIgnoreProperties({"quizzes"})
     private User creator;
 
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

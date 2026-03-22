@@ -64,6 +64,8 @@ public class GameRoomServiceImpl implements GameRoomService {
 
     @Override
     public RoomPlayer joinRoom(String code, Long userId) {
+        code = code.trim(); // ⭐ LIMPIA ESPACIOS INVISIBLES
+
         GameRoom room = gameRoomRepository.findByCode(code)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
@@ -81,6 +83,8 @@ public class GameRoomServiceImpl implements GameRoomService {
 
     @Override
     public List<RoomPlayer> getPlayers(String code) {
+        code = code.trim(); // ⭐ LIMPIA ESPACIOS INVISIBLES
+
         GameRoom room = gameRoomRepository.findByCode(code)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
@@ -89,6 +93,8 @@ public class GameRoomServiceImpl implements GameRoomService {
 
     @Override
     public GameRoom getRoom(String code) {
+        code = code.trim(); // ⭐ LIMPIA ESPACIOS INVISIBLES
+
         return gameRoomRepository.findByCode(code)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
     }
