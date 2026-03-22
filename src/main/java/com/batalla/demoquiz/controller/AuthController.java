@@ -2,6 +2,7 @@ package com.batalla.demoquiz.controller;
 
 import com.batalla.demoquiz.dto.LoginRequest;
 import com.batalla.demoquiz.dto.RegisterRequest;
+import com.batalla.demoquiz.dto.UserDTO;
 import com.batalla.demoquiz.entity.User;
 import com.batalla.demoquiz.service.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -38,14 +39,26 @@ public class AuthController {
     @PostMapping("/login")
     public Map<String, Object> login(@RequestBody LoginRequest request) {
 
-        User user = userService.login(
-                request.getUsername(),
-                request.getPassword()
-        );
+    User user = userService.login(
+            request.getUsername(),
+            request.getPassword()
+    );
 
-        return Map.of(
-                "message", "Login correcto",
-                "user", user
-        );
-    }
+    UserDTO dto = new UserDTO(
+            user.getId(),
+            user.getUsername(),
+            user.getTotalScore(),
+            user.getAvatarUrl(),
+            user.getRole()
+    );
+
+    return Map.of(
+            "message", "Login correcto",
+            "user", dto
+    );
 }
+
+}
+
+
+

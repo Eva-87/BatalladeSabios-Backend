@@ -1,6 +1,6 @@
 package com.batalla.demoquiz.service;
 
-import com.batalla.demoquiz.dto.QuestionDTO;  // ← ESTE IMPORT ES LO QUE FALTABA
+import com.batalla.demoquiz.dto.QuestionDTO;
 import com.batalla.demoquiz.entity.Question;
 import com.batalla.demoquiz.entity.User;
 import com.batalla.demoquiz.enums.Topic;
@@ -49,7 +49,7 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public List<QuestionDTO> getByTopicAndDifficulty(Topic topic, Difficulty difficulty) {
-        return questionRepository.findByTopicAndDifficulty(topic, difficulty)
+        return questionRepository.findByQuiz_TopicAndDifficulty(topic, difficulty)
                 .stream()
                 .map(q -> new QuestionDTO(
                         q.getId(),

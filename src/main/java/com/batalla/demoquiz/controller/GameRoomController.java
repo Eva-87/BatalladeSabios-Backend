@@ -30,14 +30,25 @@ public class GameRoomController {
         this.roomService = roomService;
     }
 
+    
     @PostMapping("/create")
-    public GameRoom createRoom(@RequestBody CreateRoomRequest request) {
-        return gameRoomService.createRoom(
-                request.getUserId(),
-                request.getQuizId(),
-                request.getMaxPlayers()
-        );
-    }
+    public RoomDTO createRoom(@RequestBody CreateRoomRequest request) {
+
+    GameRoom room = gameRoomService.createRoom(
+            request.getUserId(),
+            request.getQuizId(),
+            request.getMaxPlayers()
+    );
+
+    return new RoomDTO(
+            room.getCode(),
+            room.getQuiz().getTitle(),
+            room.getCreator().getId(),
+            room.getMaxPlayers(),
+            room.getStatus().name()
+    );
+}
+
 
     @PostMapping("/{code}/join")
     public RoomPlayer joinRoom(@PathVariable String code,

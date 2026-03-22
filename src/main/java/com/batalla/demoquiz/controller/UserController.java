@@ -1,14 +1,17 @@
 package com.batalla.demoquiz.controller;
 
 import com.batalla.demoquiz.dto.RegisterRequest;
+import com.batalla.demoquiz.dto.UserDTO;
 import com.batalla.demoquiz.entity.User;
 import com.batalla.demoquiz.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map; // 👈 FALTABA ESTE IMPORT
 
 @RestController
 @RequestMapping("/api/users")
+@CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
 
     private final UserService userService;
@@ -23,7 +26,7 @@ public class UserController {
                 request.getUsername(),
                 request.getEmail(),
                 request.getPassword(),
-                request.getRole()   
+                request.getRole()
         );
     }
 
@@ -35,5 +38,21 @@ public class UserController {
     @PostMapping("/create")
     public User createUser(@RequestBody User user) {
         return userService.createUser(user);
+    }
+
+    @PutMapping("/{id}/avatar")
+    public UserDTO updateAvatar(@PathVariable Long id, @RequestBody Map<String, String> body) {
+
+        String avatarUrl = body.get("avatarUrl");
+
+        User user = userService.updateAvatar(id, avatarUrl);
+
+        return new UserDTO(
+                user.getId(),
+                user.getUsername(),
+                user.getTotalScore(),
+                user.getAvatarUrl(),
+                user.getRole()
+        );
     }
 }

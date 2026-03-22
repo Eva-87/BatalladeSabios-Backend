@@ -87,56 +87,104 @@ public class QuizServiceImpl implements QuizService {
     }
 
     @Override
-    public ResponseEntity<?> updateQuiz(Long quizId, QuizUpdateRequest request) {
-        Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz no encontrado"));
+public ResponseEntity<?> updateQuiz(Long quizId, QuizUpdateRequest request) {
 
-        if (request.getTitle() != null) {
-            quiz.setTitle(request.getTitle());
-        }
+    Quiz quiz = quizRepository.findById(quizId)
+            .orElseThrow(() -> new RuntimeException("Quiz no encontrado"));
 
-        if (request.getTopic() != null) {
-            quiz.setTopic(Topic.valueOf(request.getTopic()));
-        }
-
-        if (request.getImageUrl() != null) {
-            quiz.setImageUrl(request.getImageUrl());
-        }
-
-        if (request.getQuestionIds() != null) {
-            List<Question> questions = questionRepository.findAllById(request.getQuestionIds());
-            questions.forEach(q -> q.setQuiz(quiz));
-            quiz.setQuestions(questions);
-        }
-
-        quizRepository.save(quiz);
-
-        return ResponseEntity.ok("Quiz actualizado correctamente");
+    // -----------------------------
+    // TÍTULO
+    // -----------------------------
+    if (request.getTitle() != null) {
+        quiz.setTitle(request.getTitle());
     }
+
+    // -----------------------------
+    // TOPIC (NORMAL O CUSTOM)
+    // -----------------------------
+    if (request.getTopic() != null) {
+
+        // Si es un topic del enum
+        try {
+            Topic enumTopic = Topic.valueOf(request.getTopic());
+            quiz.setTopic(enumTopic);
+            quiz.setCustomTopicId(null); // limpiar custom
+        } catch (IllegalArgumentException e) {
+
+            // Si NO es enum → es custom topic
+            CustomTopic custom = customTopicRepository.findByName(request.getTopic())
+                    .orElseThrow(() -> new RuntimeException("Custom topic not found"));
+
+            quiz.setTopic(null);
+            quiz.setCustomTopicId(custom.getId());
+        }
+    }
+
+    // -----------------------------
+    // IMAGEN
+    // -----------------------------
+    if (request.getImageUrl() != null) {
+        quiz.setImageUrl(request.getImageUrl());
+    }
+
+    // -----------------------------
+    // PREGUNTAS
+    // -----------------------------
+    if (request.getQuestionIds() != null) {
+
+        List<Question> newQuestions =
+                questionRepository.findAllById(request.getQuestionIds());
+
+        // Quitar relación anterior
+        if (quiz.getQuestions() != null) {
+            quiz.getQuestions().forEach(q -> q.setQuiz(null));
+        }
+
+        // Asignar nuevas
+        newQuestions.forEach(q -> q.setQuiz(quiz));
+
+        quiz.setQuestions(newQuestions);
+    }
+
+    quizRepository.save(quiz);
+
+    return ResponseEntity.ok("Quiz actualizado correctamente");
+}
 
     private QuizDTO toDTO(Quiz quiz) {
-        List<QuestionDTO> questionDTOs = quiz.getQuestions().stream()
-                .map(q -> new QuestionDTO(
-                        q.getId(),
-                        q.getText(),
-                        q.getOptionA(),
-                        q.getOptionB(),
-                        q.getOptionC(),
-                        q.getOptionD(),
-                        q.getCorrectIndex()
-                ))
-                .toList();
 
-        String topicStr = quiz.getTopic() != null
-                ? quiz.getTopic().name()
-                : "CUSTOM";
+    List<QuestionDTO> questionDTOs = quiz.getQuestions().stream()
+            .map(q -> new QuestionDTO(
+                    q.getId(),
+                    q.getText(),
+                    q.getOptionA(),
+                    q.getOptionB(),
+                    q.getOptionC(),
+                    q.getOptionD(),
+                    q.getCorrectIndex()
+            ))
+            .toList();
 
-        return new QuizDTO(
-                quiz.getId(),
-                quiz.getTitle(),
-                topicStr,
-                quiz.getImageUrl(),
-                questionDTOs
-        );
+    String topicStr;
+
+    if (quiz.getTopic() != null) {
+        // Topic normal (enum)
+        topicStr = quiz.getTopic().name();
+    } else {
+        // Topic personalizado
+        CustomTopic custom = customTopicRepository.findById(quiz.getCustomTopicId())
+                .orElse(null);
+
+        topicStr = custom != null ? custom.getName() : "CUSTOM";
     }
+
+    return new QuizDTO(
+            quiz.getId(),
+            quiz.getTitle(),
+            topicStr,
+            quiz.getImageUrl(),
+            questionDTOs
+    );
+}
+
 }

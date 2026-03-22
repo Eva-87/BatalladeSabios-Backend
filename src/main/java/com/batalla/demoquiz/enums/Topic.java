@@ -4,5 +4,6 @@ public enum Topic {
     MATEMATICAS,
     HISTORIA,
     CIENCIA,
-    DEPORTES
+    DEPORTES,
+    OTROS
 }

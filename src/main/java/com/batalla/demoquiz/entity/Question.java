@@ -3,6 +3,8 @@ package com.batalla.demoquiz.entity;
 import com.batalla.demoquiz.enums.Topic;
 import com.batalla.demoquiz.enums.Difficulty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -22,9 +24,6 @@ public class Question {
     private int correctIndex;
 
     @Enumerated(EnumType.STRING)
-    private Topic topic;
-
-    @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
 
     @ManyToOne
@@ -34,7 +33,10 @@ public class Question {
 
     @ManyToOne
     @JoinColumn(name = "creator_id")
+    @JsonIgnore
     private User creator;
+
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 
     @Column(columnDefinition = "TEXT")
     private String explanation;   // ⭐ NUEVO CAMPO
@@ -64,8 +66,6 @@ public class Question {
     public int getCorrectIndex() { return correctIndex; }
     public void setCorrectIndex(int correctIndex) { this.correctIndex = correctIndex; }
 
-    public Topic getTopic() { return topic; }
-    public void setTopic(Topic topic) { this.topic = topic; }
 
     public Difficulty getDifficulty() { return difficulty; }
     public void setDifficulty(Difficulty difficulty) { this.difficulty = difficulty; }

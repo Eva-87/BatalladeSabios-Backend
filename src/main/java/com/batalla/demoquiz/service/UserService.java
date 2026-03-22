@@ -15,4 +15,6 @@ public interface UserService {
     List<User> getGlobalRanking();
 
     User createUser(User user);
+
+    User updateAvatar(Long id, String avatarUrl);
 }

@@ -1,6 +1,6 @@
 package com.batalla.demoquiz.service;
 
-import com.batalla.demoquiz.dto.QuestionDTO;  // ← ESTE IMPORT ES LO QUE FALTABA
+import com.batalla.demoquiz.dto.QuestionDTO;
 import com.batalla.demoquiz.entity.Question;
 import com.batalla.demoquiz.enums.Topic;
 import com.batalla.demoquiz.enums.Difficulty;

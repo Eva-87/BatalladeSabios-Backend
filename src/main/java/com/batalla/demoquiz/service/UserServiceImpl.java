@@ -71,4 +71,14 @@ public class UserServiceImpl implements UserService {
     public User createUser(User user) {
         return userRepository.save(user);
     }
+
+    // ⭐⭐⭐ AQUI AGREGO SOLO LO QUE FALTABA ⭐⭐⭐
+    @Override
+    public User updateAvatar(Long id, String avatarUrl) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        user.setAvatarUrl(avatarUrl);
+        return userRepository.save(user);
+    }
 }

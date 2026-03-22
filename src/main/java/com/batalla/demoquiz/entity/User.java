@@ -1,6 +1,7 @@
 package com.batalla.demoquiz.entity;
 
 import jakarta.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -26,6 +27,9 @@ public class User {
 
     private String role;
 
+    @OneToMany(mappedBy = "creator")
+    private List<Quiz> quizzes;
+
     public User() {}
 
     public Long getId() { return id; }
@@ -48,4 +52,7 @@ public class User {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public List<Quiz> getQuizzes() { return quizzes; }
+    public void setQuizzes(List<Quiz> quizzes) { this.quizzes = quizzes; }
 }

@@ -10,5 +10,5 @@ import java.util.List;
 
 public interface QuestionRepository extends JpaRepository<Question, Long> {
 
-    List<Question> findByTopicAndDifficulty(Topic topic, Difficulty difficulty);
+    List<Question> findByQuiz_TopicAndDifficulty(Topic topic, Difficulty difficulty);
 }
