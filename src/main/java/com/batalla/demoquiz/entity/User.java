@@ -33,6 +33,9 @@ public class User {
     @JsonIgnore
     private List<Quiz> quizzes;
 
+    private int wins = 0;
+
+
     public User() {}
 
     public Long getId() { return id; }
@@ -58,4 +61,8 @@ public class User {
 
     public List<Quiz> getQuizzes() { return quizzes; }
     public void setQuizzes(List<Quiz> quizzes) { this.quizzes = quizzes; }
+
+    public int getWins() { return wins;}
+    public void setWins(int wins) { this.wins = wins;}
+
 }

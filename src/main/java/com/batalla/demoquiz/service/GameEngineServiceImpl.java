@@ -5,6 +5,7 @@ import com.batalla.demoquiz.dto.GameOverMessage;
 import com.batalla.demoquiz.dto.QuestionMessage;
 import com.batalla.demoquiz.dto.RoundResultMessage;
 import com.batalla.demoquiz.entity.GameRoom;
+import com.batalla.demoquiz.entity.PlayerAnswer;
 import com.batalla.demoquiz.entity.Question;
 import com.batalla.demoquiz.entity.RoomPlayer;
 import com.batalla.demoquiz.enums.GameStatus;
@@ -20,24 +21,18 @@ public class GameEngineServiceImpl implements GameEngineService {
 
     private final GameRoomRepository gameRoomRepository;
     private final RoomPlayerRepository roomPlayerRepository;
+    private final PlayerAnswerService playerAnswerService;
 
-    private final Map<String, List<Question>> roomQuestions = new HashMap<>();
-    private final Map<String, Integer> roomRound = new HashMap<>();
-    private final Map<String, Map<Long, Integer>> roomAnswers = new HashMap<>();
-    private final Map<String, Long> questionStartTime = new HashMap<>();
-
-    // ⭐ Pregunta actual accesible para TODOS los jugadores
-    private final Map<String, QuestionMessage> currentQuestion = new HashMap<>();
-
-    public GameEngineServiceImpl(GameRoomRepository gameRoomRepository,
-                                 RoomPlayerRepository roomPlayerRepository) {
+    public GameEngineServiceImpl(
+            GameRoomRepository gameRoomRepository,
+            RoomPlayerRepository roomPlayerRepository,
+            PlayerAnswerService playerAnswerService
+    ) {
         this.gameRoomRepository = gameRoomRepository;
         this.roomPlayerRepository = roomPlayerRepository;
+        this.playerAnswerService = playerAnswerService;
     }
 
-    // ---------------------------------------------------------
-    // START GAME
-    // ---------------------------------------------------------
     @Override
     public QuestionMessage startGame(String roomCode) {
 
@@ -49,121 +44,166 @@ public class GameEngineServiceImpl implements GameEngineService {
             throw new RuntimeException("Quiz has no questions");
         }
 
-        // Mezclar preguntas
-        List<Question> shuffled = new ArrayList<>(questions);
-        Collections.shuffle(shuffled);
+        Collections.shuffle(questions);
 
-        roomQuestions.put(roomCode, shuffled);
-        roomRound.put(roomCode, 1);
-        roomAnswers.put(roomCode, new HashMap<>());
-
+        room.setCurrentQuestionIndex(0);
+        room.setLastRoundResult(null);
         room.setStatus(GameStatus.PLAYING);
         gameRoomRepository.save(room);
 
-        // Primera pregunta
-        Question q = shuffled.get(0);
-
-        questionStartTime.put(roomCode, System.currentTimeMillis());
-
-        QuestionMessage msg = new QuestionMessage(
-                q.getId(),
-                q.getText(),
-                List.of(q.getOptionA(), q.getOptionB(), q.getOptionC(), q.getOptionD()),
-                1,
-                q.getCorrectIndex(),
-                q.getExplanation()
-        );
-
-        // ⭐ Guardar pregunta actual
-        currentQuestion.put(roomCode, msg);
-
-        return msg;
+        return buildQuestionMessage(questions.get(0), 1);
     }
 
-    // ---------------------------------------------------------
-    // SUBMIT ANSWER
-    // ---------------------------------------------------------
     @Override
     public RoundResultMessage submitAnswer(String roomCode, AnswerMessage answer) {
+
         GameRoom room = gameRoomRepository.findByCode(roomCode)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
-        roomAnswers.computeIfAbsent(roomCode, k -> new HashMap<>())
-                .put(answer.getUserId(), answer.getChosenIndex());
+        List<Question> questions = room.getQuiz().getQuestions();
+        int index = room.getCurrentQuestionIndex();
+        Question q = questions.get(index);
 
         List<RoomPlayer> players = roomPlayerRepository.findByRoom(room);
 
-        // Esperar a que todos respondan
-        if (roomAnswers.get(roomCode).size() < players.size()) {
-            return null;
-        }
+        RoomPlayer player = players.stream()
+                .filter(p -> p.getUser().getId().equals(answer.getUserId()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Player not in room"));
 
-        int round = roomRound.get(roomCode);
-        List<Question> questions = roomQuestions.get(roomCode);
+        if (!playerAnswerService.hasAnswered(room, player.getUser(), index)) {
 
-        Question q = questions.get(round - 1);
+            boolean correct = answer.getChosenIndex() == q.getCorrectIndex();
 
-        Map<Long, Integer> scores = new HashMap<>();
+            playerAnswerService.saveAnswer(room, player.getUser(), index, correct);
 
-        long start = questionStartTime.getOrDefault(roomCode, System.currentTimeMillis());
-        long now = System.currentTimeMillis();
-        int secondsElapsed = (int) ((now - start) / 1000);
-
-        for (RoomPlayer p : players) {
-            Long userId = p.getUser().getId();
-            Integer chosen = roomAnswers.get(roomCode).get(userId);
-
-            if (chosen != null && chosen == q.getCorrectIndex()) {
-                int timeBonus = Math.max(0, 100 - secondsElapsed * 10);
-                p.setScore(p.getScore() + timeBonus);
-                roomPlayerRepository.save(p);
-
-                room.addCorrect(userId);
-            } else {
-                room.addWrong(userId);
+            if (correct) {
+                player.setScore(player.getScore() + 100);
             }
 
-            scores.put(userId, p.getScore());
+            roomPlayerRepository.save(player);
         }
 
-        roomAnswers.get(roomCode).clear();
+        int answered = playerAnswerService.countAnswers(room, index);
+        int totalPlayers = players.size();
 
-        room.setStatus(GameStatus.SHOWING_RESULTS);
-        gameRoomRepository.save(room);
+        if (answered == totalPlayers) {
+            room.setStatus(GameStatus.SHOWING_RESULTS);
+        }
 
-        return new RoundResultMessage(
+        // 🔥 Puntajes congelados de la ronda
+        Map<Long, Integer> scores = players.stream()
+                .collect(Collectors.toMap(
+                        p -> p.getUser().getId(),
+                        p -> p.getScore()
+                ));
+
+        RoundResultMessage result = new RoundResultMessage(
                 q.getId(),
                 q.getCorrectIndex(),
                 scores
         );
+
+        room.setLastRoundResult(result);
+        gameRoomRepository.save(room);
+
+        return result;
     }
 
-    // ---------------------------------------------------------
-    // NEXT QUESTION
-    // ---------------------------------------------------------
     @Override
     public QuestionMessage nextQuestion(String roomCode) {
+
         GameRoom room = gameRoomRepository.findByCode(roomCode)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
-        List<Question> questions = roomQuestions.get(roomCode);
+        List<Question> questions = room.getQuiz().getQuestions();
 
-        int round = roomRound.compute(roomCode, (k, v) -> v + 1);
+        int nextIndex = room.getCurrentQuestionIndex() + 1;
 
-        if (round > questions.size()) {
+        if (nextIndex >= questions.size()) {
             room.setStatus(GameStatus.FINISHED);
+            room.setLastRoundResult(null);
             gameRoomRepository.save(room);
-            return null;
+            return new QuestionMessage(null, null, List.of(), -1, -1, null);
         }
 
-        Question q = questions.get(round - 1);
+        playerAnswerService.clearAnswersForQuestion(room, room.getCurrentQuestionIndex());
 
-        questionStartTime.put(roomCode, System.currentTimeMillis());
-
+        room.setLastRoundResult(null);
+        room.setCurrentQuestionIndex(nextIndex);
         room.setStatus(GameStatus.PLAYING);
         gameRoomRepository.save(room);
 
-        QuestionMessage msg = new QuestionMessage(
+        return buildQuestionMessage(questions.get(nextIndex), nextIndex + 1);
+    }
+
+    @Override
+    public GameOverMessage finishGame(String roomCode) {
+
+        GameRoom room = gameRoomRepository.findByCode(roomCode)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+
+        room.setStatus(GameStatus.FINISHED);
+        room.setLastRoundResult(null);
+        gameRoomRepository.save(room);
+
+        // 🔥 Limpia respuestas de la última pregunta
+        playerAnswerService.clearAnswersForQuestion(room, room.getCurrentQuestionIndex());
+
+        List<RoomPlayer> players = roomPlayerRepository.findByRoom(room);
+
+        int totalQuestions = room.getQuiz().getQuestions().size();
+
+        List<GameOverMessage.PlayerResult> ranking = players.stream()
+                .map(p -> {
+
+                    long correctCount = playerAnswerService
+                            .getAnswersForPlayer(room, p.getUser())
+                            .stream()
+                            .filter(PlayerAnswer::isCorrect)
+                            .count();
+
+                    return new GameOverMessage.PlayerResult(
+                            p.getUser().getId(),
+                            p.getUser().getUsername(),
+                            p.getScore(),
+                            (int) correctCount,
+                            totalQuestions
+                    );
+                })
+                .sorted(Comparator.comparingInt(GameOverMessage.PlayerResult::getScore).reversed())
+                .toList();
+
+        return new GameOverMessage(ranking);
+    }
+
+    @Override
+    public QuestionMessage getCurrentQuestion(String roomCode) {
+
+        GameRoom room = gameRoomRepository.findByCode(roomCode)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+
+        List<Question> questions = room.getQuiz().getQuestions();
+        int index = room.getCurrentQuestionIndex();
+
+        if (index < 0 || index >= questions.size()) {
+            return null;
+        }
+
+        Question q = questions.get(index);
+
+        return new QuestionMessage(
+                q.getId(),
+                q.getText(),
+                List.of(q.getOptionA(), q.getOptionB(), q.getOptionC(), q.getOptionD()),
+                index + 1,
+                q.getCorrectIndex(),
+                q.getExplanation()
+        );
+    }
+
+    private QuestionMessage buildQuestionMessage(Question q, int round) {
+        return new QuestionMessage(
                 q.getId(),
                 q.getText(),
                 List.of(q.getOptionA(), q.getOptionB(), q.getOptionC(), q.getOptionD()),
@@ -171,47 +211,5 @@ public class GameEngineServiceImpl implements GameEngineService {
                 q.getCorrectIndex(),
                 q.getExplanation()
         );
-
-        // ⭐ Guardar nueva pregunta actual
-        currentQuestion.put(roomCode, msg);
-
-        return msg;
-    }
-
-    // ---------------------------------------------------------
-    // FINISH GAME
-    // ---------------------------------------------------------
-    @Override
-    public GameOverMessage finishGame(String roomCode) {
-        GameRoom room = gameRoomRepository.findByCode(roomCode)
-                .orElseThrow(() -> new RuntimeException("Room not found"));
-
-        room.setStatus(GameStatus.FINISHED);
-        gameRoomRepository.save(room);
-
-        List<RoomPlayer> players = roomPlayerRepository.findByRoom(room);
-
-        int totalQuestions = roomQuestions.get(roomCode).size();
-
-        List<GameOverMessage.PlayerResult> ranking = players.stream()
-                .sorted(Comparator.comparingInt(RoomPlayer::getScore).reversed())
-                .map(p -> new GameOverMessage.PlayerResult(
-                        p.getUser().getId(),
-                        p.getUser().getUsername(),
-                        p.getScore(),
-                        room.getCorrectAnswers().getOrDefault(p.getUser().getId(), 0),
-                        totalQuestions
-                ))
-                .collect(Collectors.toList());
-
-        return new GameOverMessage(ranking);
-    }
-
-    // ---------------------------------------------------------
-    // GET CURRENT QUESTION
-    // ---------------------------------------------------------
-    @Override
-    public QuestionMessage getCurrentQuestion(String roomCode) {
-        return currentQuestion.get(roomCode);
     }
 }

@@ -2,6 +2,7 @@ package com.batalla.demoquiz.service;
 
 import com.batalla.demoquiz.entity.GameRoom;
 import com.batalla.demoquiz.entity.RoomPlayer;
+import com.batalla.demoquiz.enums.GameStatus;
 
 import java.util.List;
 
@@ -14,6 +15,6 @@ public interface GameRoomService {
     List<RoomPlayer> getPlayers(String code);
 
     GameRoom getRoom(String code);
+
+    GameStatus getStatus(String code);
 }
-
-

@@ -48,6 +48,7 @@ public class GameRoomServiceImpl implements GameRoomService {
         room.setCreator(creator);
         room.setMaxPlayers(maxPlayers);
         room.setStatus(GameStatus.LOBBY);
+        room.setLastRoundResult(null);
 
         GameRoom saved = gameRoomRepository.save(room);
 
@@ -64,7 +65,7 @@ public class GameRoomServiceImpl implements GameRoomService {
 
     @Override
     public RoomPlayer joinRoom(String code, Long userId) {
-        code = code.trim(); // ⭐ LIMPIA ESPACIOS INVISIBLES
+        code = code.trim();
 
         GameRoom room = gameRoomRepository.findByCode(code)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
@@ -83,7 +84,7 @@ public class GameRoomServiceImpl implements GameRoomService {
 
     @Override
     public List<RoomPlayer> getPlayers(String code) {
-        code = code.trim(); // ⭐ LIMPIA ESPACIOS INVISIBLES
+        code = code.trim();
 
         GameRoom room = gameRoomRepository.findByCode(code)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
@@ -93,10 +94,19 @@ public class GameRoomServiceImpl implements GameRoomService {
 
     @Override
     public GameRoom getRoom(String code) {
-        code = code.trim(); // ⭐ LIMPIA ESPACIOS INVISIBLES
+        code = code.trim();
 
         return gameRoomRepository.findByCode(code)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
+    }
+
+    @Override
+    public GameStatus getStatus(String code) {
+        code = code.trim();
+
+        return gameRoomRepository.findByCode(code)
+                .map(GameRoom::getStatus)
+                .orElse(GameStatus.LOBBY);
     }
 
     private String generateCode() {

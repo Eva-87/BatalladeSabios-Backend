@@ -1,6 +1,8 @@
 package com.batalla.demoquiz.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -15,6 +17,7 @@ public class RoomPlayer {
     private GameRoom room;
 
     @ManyToOne
+    @JsonIgnoreProperties({"quizzes", "roomPlayers"})
     private User user;
 
     private int score;

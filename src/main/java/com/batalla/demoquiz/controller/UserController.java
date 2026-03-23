@@ -55,4 +55,17 @@ public class UserController {
                 user.getRole()
         );
     }
+@PutMapping("/{id}/add-win")
+public UserDTO addWin(@PathVariable Long id) {
+    User user = userService.addWin(id);
+
+    return new UserDTO(
+            user.getId(),
+            user.getUsername(),
+            user.getTotalScore(),
+            user.getAvatarUrl(),
+            user.getRole()
+    );
+}
+
 }

@@ -30,7 +30,6 @@ public class Quiz {
 
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
-
     private List<Question> questions;
 
     public Quiz() {}

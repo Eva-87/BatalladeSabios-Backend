@@ -37,6 +37,7 @@ public class UserServiceImpl implements UserService {
         u.setPasswordHash(encoder.encode(password));
         u.setRole(role); // USER o CREATOR
         u.setTotalScore(0);
+        u.setWins(0); // ⭐ Inicializamos victorias
 
         return userRepository.save(u);
     }
@@ -72,13 +73,23 @@ public class UserServiceImpl implements UserService {
         return userRepository.save(user);
     }
 
-    // ⭐⭐⭐ AQUI AGREGO SOLO LO QUE FALTABA ⭐⭐⭐
     @Override
     public User updateAvatar(Long id, String avatarUrl) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         user.setAvatarUrl(avatarUrl);
+        return userRepository.save(user);
+    }
+
+    // ⭐⭐⭐ MÉTODO NUEVO: SUMAR UNA VICTORIA ⭐⭐⭐
+    @Override
+    public User addWin(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setWins(user.getWins() + 1);
+
         return userRepository.save(user);
     }
 }

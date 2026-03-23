@@ -17,4 +17,7 @@ public interface UserService {
     User createUser(User user);
 
     User updateAvatar(Long id, String avatarUrl);
+
+    User addWin(Long userId);
+
 }
